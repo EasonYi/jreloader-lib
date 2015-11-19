@@ -4,8 +4,10 @@
  * You need only to add a couple of vm arguments, as in the example below:
  * -Djreloader.dirs={java_source_dir} -Djreloader.interval={ms}
  *
- * @Reloadable to be used in class declarations
- * e.g. @Reloadable(module={Id})
+ * @Reloadable to be used in class declarations, that can be there to make a class reloadable
+ * e.g. 
+ * @Reloadable(module={Id})
+ * public class xx {}
  */
 static final int MOUDLE_COMMAND = 1;
 
