@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.tools.Diagnostic;
 import javax.tools.DiagnosticCollector;
 import javax.tools.FileObject;
 import javax.tools.ForwardingJavaFileManager;
@@ -39,9 +40,11 @@ import javax.tools.ToolProvider;
  */
 public class JdkCompiler extends AbstractCompiler {
 
-    private final static Map<URI, JavaFileObject> SOURCE_FILE_OBJECTS = new HashMap<URI, JavaFileObject>();
-    private final static Map<String, JavaFileObject> CLASS_FILE_OBJECTS = new HashMap<String, JavaFileObject>();
-    
+    private final static Map<URI, JavaFileObject> SOURCE_FILE_OBJECTS =
+            new HashMap<URI, JavaFileObject>();
+    private final static Map<String, JavaFileObject> CLASS_FILE_OBJECTS =
+            new HashMap<String, JavaFileObject>();
+
     private final JavaCompiler compiler;
     private volatile List<String> options;
 
@@ -92,8 +95,20 @@ public class JdkCompiler extends AbstractCompiler {
                 compiler.getTask(null, javaFileManager, diagnosticCollector, options, null,
                         Arrays.asList(new JavaFileObject[] {javaFileObject})).call();
         if (result == null || !result.booleanValue()) {
-            throw new IllegalStateException("Compilation failed. class: " + name
-                    + ", diagnostics: " + diagnosticCollector);
+            StringBuffer sb = new StringBuffer();
+            for (Diagnostic<?> diagnostic : diagnosticCollector.getDiagnostics()) {
+                sb.append("Source:[" + diagnostic.getSource() + "]\n");
+                sb.append("Kind:[" + diagnostic.getKind() + "], ");
+                sb.append("Code:[" + diagnostic.getCode() + "]\n");
+                sb.append("Position:[" + diagnostic.getPosition() + "], ");
+                sb.append("Start Position:[" + diagnostic.getStartPosition() + "], ");
+                sb.append("End Position:[" + diagnostic.getEndPosition() + "]\n");
+                sb.append("LineNumber:[" + diagnostic.getLineNumber() + "], ");
+                sb.append("ColumnNumber:[" + diagnostic.getColumnNumber() + "]\n");
+                sb.append("Message:[" + diagnostic.getMessage(null) + "]\n");
+            }
+            throw new IllegalStateException("Compilation failed. class: " + name + "\n"
+                    + sb.toString());
         }
         return classLoader.loadClass(name);
     }
@@ -101,7 +116,7 @@ public class JdkCompiler extends AbstractCompiler {
     private URI uri(Location location, String packageName, String relativeName) {
         return URI.create(location.getName() + '/' + packageName + '/' + relativeName);
     }
-    
+
     private final class ClassLoaderImpl extends ClassLoader {
 
         ClassLoaderImpl(final ClassLoader parentClassLoader) {
@@ -182,7 +197,7 @@ public class JdkCompiler extends AbstractCompiler {
             CLASS_FILE_OBJECTS.put(qualifiedName, file);
             return file;
         }
-        
+
         @Override
         public String inferBinaryName(Location loc, JavaFileObject file) {
             if (file instanceof JavaFileObjectImpl)
@@ -191,13 +206,14 @@ public class JdkCompiler extends AbstractCompiler {
         }
 
         @Override
-        public Iterable<JavaFileObject> list(Location location, String packageName, Set<Kind> kinds, boolean recurse)
-                throws IOException {
+        public Iterable<JavaFileObject> list(Location location, String packageName,
+                Set<Kind> kinds, boolean recurse) throws IOException {
             Iterable<JavaFileObject> result = super.list(location, packageName, kinds, recurse);
 
             ArrayList<JavaFileObject> files = new ArrayList<JavaFileObject>();
 
-            if (location == StandardLocation.CLASS_PATH && kinds.contains(JavaFileObject.Kind.CLASS)) {
+            if (location == StandardLocation.CLASS_PATH
+                    && kinds.contains(JavaFileObject.Kind.CLASS)) {
                 for (JavaFileObject file : SOURCE_FILE_OBJECTS.values()) {
                     if (file.getKind() == Kind.CLASS && file.getName().startsWith(packageName)) {
                         files.add(file);
@@ -205,7 +221,8 @@ public class JdkCompiler extends AbstractCompiler {
                 }
 
                 files.addAll(Collections.unmodifiableCollection(CLASS_FILE_OBJECTS.values()));
-            } else if (location == StandardLocation.SOURCE_PATH && kinds.contains(JavaFileObject.Kind.SOURCE)) {
+            } else if (location == StandardLocation.SOURCE_PATH
+                    && kinds.contains(JavaFileObject.Kind.SOURCE)) {
                 for (JavaFileObject file : SOURCE_FILE_OBJECTS.values()) {
                     if (file.getKind() == Kind.SOURCE && file.getName().startsWith(packageName)) {
                         files.add(file);
