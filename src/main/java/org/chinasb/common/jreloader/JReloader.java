@@ -74,6 +74,16 @@ public class JReloader {
 		}
 	}
 
+    public void stop() {
+        if (monitor != null) {
+            try {
+                monitor.stop();
+            } catch (Exception e) {
+                LOGGER.error("重载脚本功能停止失败!", e);
+            }
+        }
+    }
+	
 	private void reload(File file) {
 		try {
 			Class<?> clazz = complier.compile(FileUtils.readFileToString(file));
