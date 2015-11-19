@@ -38,11 +38,16 @@ public class JReloader {
 				"jreloader.interval", 5000));
 		monitor.start();
 		try {
-			File folder = new File(System.getProperty("jreloader.dirs", "."));
-			if (!folder.exists()) {
-				LOGGER.error("监控目录[{}]不存在!", folder);
-				return;
-			}
+            File folder = new File(System.getProperty("jreloader.dirs", "."));
+            if (!folder.exists()) {
+                LOGGER.error("监控目录[{}]不存在!", folder);
+                try {
+                    folder.mkdirs();
+                    LOGGER.error("自动创建监控目录[{}]成功!", folder);
+                } catch (Exception e) {
+                    LOGGER.error("自动创建监控目录[{}]失败!", folder);
+                }
+            }
 			FileAlterationObserver observer = new FileAlterationObserver(
 					folder, new FileFilter() {
 
