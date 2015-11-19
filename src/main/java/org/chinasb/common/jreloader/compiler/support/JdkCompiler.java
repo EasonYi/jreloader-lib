@@ -94,6 +94,7 @@ public class JdkCompiler extends AbstractCompiler {
         Boolean result =
                 compiler.getTask(null, javaFileManager, diagnosticCollector, options, null,
                         Arrays.asList(new JavaFileObject[] {javaFileObject})).call();
+        javaFileManager.close();
         if (result == null || !result.booleanValue()) {
             StringBuffer sb = new StringBuffer();
             for (Diagnostic<?> diagnostic : diagnosticCollector.getDiagnostics()) {
