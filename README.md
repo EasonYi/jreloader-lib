@@ -26,4 +26,7 @@ jReloader.addReloader(MOUDLE_COMMAND, new BaseReloader() {
 	}
 
 };
+
+// stop
+jReloader.stop();
 ```
